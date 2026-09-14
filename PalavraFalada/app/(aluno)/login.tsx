@@ -1,33 +1,24 @@
-import { useState } from 'react';
-import { View, TextInput, Button, Text } from 'react-native';
+import { View, Text, Button } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
+// Sem campo de nome de propósito: o público é analfabeto/em alfabetização
 export default function AlunoLogin() {
   const router = useRouter();
   const { turmaId } = useLocalSearchParams(); // Captura o ID vindo do QR Code [3]
-  const [nome, setNome] = useState('');
 
   const handleEntrar = () => {
-    if (nome.trim()) {
-      // Registrar no servidor local/API do backend [5]
-      // E direcionar para a lista de tarefas da turma vinculada [1]
-      router.push({
-        pathname: '/(aluno)/tarefas',
-        params: { nome, turmaId }
-      });
-    }
+    // Registrar no servidor local/API do backend [5]
+    // E direcionar para a lista de tarefas da turma vinculada [1]
+    router.push({
+      pathname: '/(aluno)/tarefas',
+      params: { turmaId }
+    });
   };
 
   return (
-    <View style={{ padding: 20, flex: 1, justifyContent: 'center' }}>
-      <Text style={{ fontSize: 18, marginBottom: 10 }}>Escreva seu nome para começar:</Text>
-      <TextInput
-        style={{ borderWidth: 1, padding: 10, marginBottom: 20, borderRadius: 5 }}
-        placeholder="Seu nome"
-        value={nome}
-        onChangeText={setNome}
-      />
-      <Button title="Concluir" onPress={handleEntrar} />
+    <View style={{ padding: 20, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text style={{ fontSize: 22, marginBottom: 20, textAlign: 'center' }}>Toque para começar</Text>
+      <Button title="Entrar" onPress={handleEntrar} />
     </View>
   );
 }

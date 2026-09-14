@@ -8,9 +8,10 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Palavra Falada</Text>
 
-      <TouchableOpacity 
-        style={[styles.button, styles.alunoButton]} 
-        onPress={() => router.push('/')} // TODO: Abrir camera pra ler QRCode da turma e fazer login 
+      <TouchableOpacity
+        style={[styles.button, styles.alunoButton]}
+        // TODO: trocar por leitura de QRCode da turma; por enquanto vai direto pro login do aluno
+        onPress={() => router.push('/(aluno)/login')}
       >
         <Text style={styles.buttonText}>Entrar como Aluno (QR Code)</Text>
       </TouchableOpacity>

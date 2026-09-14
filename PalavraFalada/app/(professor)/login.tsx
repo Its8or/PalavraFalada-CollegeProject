@@ -10,9 +10,9 @@ export default function ProfessorLogin() {
   const handleEntrar = () => {
     if (nome.trim()) {
       // Registrar no servidor local/API do backend [5]
-      // E direcionar para a lista de tarefas da turma vinculada [1]
+      // E direcionar para a lista de turmas do professor
       router.push({
-        pathname: '/(aluno)/tarefas',
+        pathname: '/(professor)/turmas',
         params: { nome, turmaId }
       });
     }
