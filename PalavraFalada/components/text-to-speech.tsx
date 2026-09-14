@@ -1,37 +1,17 @@
 import { useEffect } from 'react';
-import * as Speech from 'expo-speech';
 import { usePathname } from 'expo-router';
+import { playSpeech, stopSpeech } from '@/services/speech';
 
+// Narra a instrução da tela atual sempre que o usuário navega para uma nova rota
 export function useAudioGuia(textoDeInstrucao: string) {
   const pathname = usePathname();
 
   useEffect(() => {
-    let isMounted = true;
+    playSpeech(textoDeInstrucao);
 
-    async function falar() {
-      // Cancela qualquer fala anterior antes de iniciar uma nova
-      try {
-        await Speech.stop();
-      } catch (error) {
-        // Ignora erros ao parar
-      }
-
-      if (isMounted && textoDeInstrucao) {
-        Speech.speak(textoDeInstrucao, {
-          language: 'pt-BR',
-          onError: (err) => console.log('Erro no TTS:', err),
-        });
-      }
-    }
-
-    falar();
-
-    // Cleanup: encerra o áudio tratando a Promise
+    // Interrompe a narração se o usuário sair da tela antes dela terminar
     return () => {
-      isMounted = false;
-      Speech.stop().catch(() => {
-        // Trata a rejeição para não estourar erro não capturado
-      });
+      stopSpeech();
     };
   }, [pathname, textoDeInstrucao]);
 }
