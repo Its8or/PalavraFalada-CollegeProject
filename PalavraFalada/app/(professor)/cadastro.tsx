@@ -1,34 +1,14 @@
 import { useState } from 'react';
-import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/services/supabase';
 
-export default function ProfessorLogin() {
+// Tela só visual por enquanto - o cadastro de verdade (supabase.auth.signUp) fica pra depois
+export default function CadastroProfessor() {
   const router = useRouter();
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [entrando, setEntrando] = useState(false);
-
-  async function handleEntrar() {
-    if (!email.trim() || !senha) return;
-
-    setEntrando(true);
-    // As policies de RLS conferem turmas.professor_id = auth.uid(), por isso
-    // precisa de uma sessão de verdade aqui, não só navegar pra frente
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: senha,
-    });
-    setEntrando(false);
-
-    if (error) {
-      Alert.alert('Erro ao entrar', error.message);
-      return;
-    }
-
-    router.push('/(professor)/turmas');
-  }
 
   return (
     <View style={styles.container}>
@@ -43,11 +23,16 @@ export default function ProfessorLogin() {
       </View>
 
       <Text style={styles.titulo}>
-        LOGIN DO{'\n'}PROFESSOR
+        CADASTRO DO{'\n'}PROFESSOR
       </Text>
 
       <View style={styles.campo}>
         <Ionicons name="person" size={18} color="#5B9BD5" />
+        <TextInput style={styles.input} placeholder="Nome Completo" value={nome} onChangeText={setNome} />
+      </View>
+
+      <View style={styles.campo}>
+        <Ionicons name="mail" size={18} color="#5B9BD5" />
         <TextInput
           style={styles.input}
           placeholder="E-mail"
@@ -60,21 +45,15 @@ export default function ProfessorLogin() {
 
       <View style={styles.campo}>
         <Ionicons name="lock-closed" size={18} color="#5B9BD5" />
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          value={senha}
-          onChangeText={setSenha}
-          secureTextEntry
-        />
+        <TextInput style={styles.input} placeholder="Senha" value={senha} onChangeText={setSenha} secureTextEntry />
       </View>
 
-      <TouchableOpacity style={styles.botaoEntrar} onPress={handleEntrar} disabled={entrando}>
-        {entrando ? <ActivityIndicator color="#FFF" /> : <Text style={styles.botaoEntrarTexto}>ENTRAR</Text>}
+      <TouchableOpacity style={styles.botaoCadastrar} onPress={() => router.push('/(professor)/login')}>
+        <Text style={styles.botaoCadastrarTexto}>CADASTRAR</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/(professor)/cadastro')}>
-        <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
+      <TouchableOpacity onPress={() => router.push('/(professor)/login')}>
+        <Text style={styles.link}>Já tem uma conta? Entre aqui.</Text>
       </TouchableOpacity>
     </View>
   );
@@ -95,10 +74,10 @@ const styles = StyleSheet.create({
     borderRadius: 30, paddingHorizontal: 18, paddingVertical: 4, width: '100%',
   },
   input: { flex: 1, paddingVertical: 12, fontSize: 15 },
-  botaoEntrar: {
+  botaoCadastrar: {
     backgroundColor: '#1565C0', paddingVertical: 16, borderRadius: 30, width: '100%',
     alignItems: 'center', marginTop: 12,
   },
-  botaoEntrarTexto: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  botaoCadastrarTexto: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   link: { color: '#1565C0', marginTop: 4 },
 });

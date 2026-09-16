@@ -23,3 +23,17 @@ export const TIPOS_TAREFA: ConfigTipoTarefa[] = [
 export function identificarTipoPorTitulo(titulo: string) {
   return TIPOS_TAREFA.find((config) => titulo.startsWith(config.prefixo)) ?? null;
 }
+
+// Tira o prefixo do título e devolve só o conteúdo (ex: "BOLA" ou "B + A = BA")
+export function extrairConteudo(titulo: string, config: ConfigTipoTarefa) {
+  return titulo.slice(config.prefixo.length).trim();
+}
+
+// Mock só pra telas de exemplo (ainda sem busca real no Supabase pro lado do aluno)
+export const TAREFAS_EXEMPLO = [
+  { id: '1', titulo: 'Ouvir e repetir B + A = BA' },
+  { id: '2', titulo: 'Ouvir e repetir P + A = PA' },
+  { id: '3', titulo: 'Falar a palavra BOLA' },
+  { id: '4', titulo: 'Ler a palavra CASA' },
+  { id: '5', titulo: 'Completar a palavra CA_SA' },
+];
