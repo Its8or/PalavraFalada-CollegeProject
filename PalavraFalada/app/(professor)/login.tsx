@@ -1,33 +1,53 @@
 import { useState } from 'react';
-import { View, TextInput, Button, Text } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, TextInput, Button, Text, Alert, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import { supabase } from '@/services/supabase';
 
 export default function ProfessorLogin() {
   const router = useRouter();
-  const { turmaId } = useLocalSearchParams(); // Captura o ID vindo do QR Code [3]
-  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [entrando, setEntrando] = useState(false);
 
-  const handleEntrar = () => {
-    if (nome.trim()) {
-      // Registrar no servidor local/API do backend [5]
-      // E direcionar para a lista de turmas do professor
-      router.push({
-        pathname: '/(professor)/turmas',
-        params: { nome, turmaId }
-      });
+  async function handleEntrar() {
+    if (!email.trim() || !senha) return;
+
+    setEntrando(true);
+    // As policies de RLS conferem turmas.professor_id = auth.uid(), por isso
+    // precisa de uma sessão de verdade aqui, não só navegar pra frente
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: senha,
+    });
+    setEntrando(false);
+
+    if (error) {
+      Alert.alert('Erro ao entrar', error.message);
+      return;
     }
-  };
+
+    router.push('/(professor)/turmas');
+  }
 
   return (
     <View style={{ padding: 20, flex: 1, justifyContent: 'center' }}>
-      <Text style={{ fontSize: 18, marginBottom: 10 }}>Escreva seu nome para começar:</Text>
+      <Text style={{ fontSize: 18, marginBottom: 10 }}>Login do Professor</Text>
+      <TextInput
+        style={{ borderWidth: 1, padding: 10, marginBottom: 12, borderRadius: 5 }}
+        placeholder="E-mail"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
       <TextInput
         style={{ borderWidth: 1, padding: 10, marginBottom: 20, borderRadius: 5 }}
-        placeholder="Seu nome"
-        value={nome}
-        onChangeText={setNome}
+        placeholder="Senha"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
       />
-      <Button title="Concluir" onPress={handleEntrar} />
+      {entrando ? <ActivityIndicator /> : <Button title="Entrar" onPress={handleEntrar} />}
     </View>
   );
 }
