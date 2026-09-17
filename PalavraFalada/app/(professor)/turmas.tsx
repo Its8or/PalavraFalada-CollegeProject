@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'rea
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
+import { LogoIcone } from '@/components/logo';
 
 type Turma = { id: string; nome: string };
 type Aluno = { id: string; nome: string };
@@ -47,7 +48,7 @@ export default function TurmasScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 50 }}>
         <View style={styles.header}>
           <View style={styles.logoLinha}>
-            <Ionicons name="book" size={30} color="#1565C0" />
+            <LogoIcone size={42} />
             <View>
               <Text style={styles.logoPalavra}>Palavra</Text>
               <Text style={styles.logoFalada}>Falada</Text>
@@ -56,6 +57,7 @@ export default function TurmasScreen() {
           <View style={styles.perfil}>
             <Ionicons name="person-circle" size={30} color="#90CAF9" />
             <Text style={styles.perfilNome} numberOfLines={1}>{nomeProfessor}</Text>
+            <Ionicons name="chevron-down" size={16} color="#1565C0" />
           </View>
         </View>
         <Text style={styles.subtitulo}>Professor</Text>
@@ -116,21 +118,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F9FF' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   logoLinha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoPalavra: { fontSize: 16, fontWeight: 'bold', color: '#0D47A1' },
-  logoFalada: { fontSize: 16, fontWeight: 'bold', color: '#1E88E5', marginTop: -4 },
+  logoPalavra: { fontSize: 16, fontWeight: 'bold', color: '#1E88E5' },
+  logoFalada: { fontSize: 16, fontWeight: 'bold', color: '#0D3B7A', marginTop: -4 },
   perfil: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: 140 },
   perfilNome: { fontWeight: 'bold', color: '#0D47A1' },
   subtitulo: { fontSize: 22, fontWeight: 'bold', color: '#0D47A1', marginTop: 12, marginBottom: 16 },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#FFF',
     borderRadius: 16, padding: 16, marginBottom: 14,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
   },
   cardIcone: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
   cardTitulo: { fontSize: 16, fontWeight: 'bold', color: '#0D47A1' },
   cardTexto: { fontSize: 13, color: '#5C6B73', marginTop: 2 },
   alunosHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 10 },
   alunosTitulo: { fontSize: 20, fontWeight: 'bold', color: '#0D47A1' },
-  listaAlunos: { backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: 16 },
+  listaAlunos: {
+    backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: 16,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
+  },
   alunosAviso: { paddingVertical: 20, textAlign: 'center', color: '#8E8E93' },
   alunoItem: {
     flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14,

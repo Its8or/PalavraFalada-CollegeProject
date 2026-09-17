@@ -3,6 +3,8 @@ import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
+import { LogoIcone } from '@/components/logo';
+import { WaveHeader } from '@/components/wave-header';
 
 export default function ProfessorLogin() {
   const router = useRouter();
@@ -32,10 +34,11 @@ export default function ProfessorLogin() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.onda} />
+      <WaveHeader posicao="top" />
+      <WaveHeader posicao="bottom" />
 
       <View style={styles.logoLinha}>
-        <Ionicons name="book" size={32} color="#1565C0" />
+        <LogoIcone size={58} />
         <View>
           <Text style={styles.logoPalavra}>PALAVRA</Text>
           <Text style={styles.logoFalada}>FALADA</Text>
@@ -47,7 +50,7 @@ export default function ProfessorLogin() {
       </Text>
 
       <View style={styles.campo}>
-        <Ionicons name="person" size={18} color="#5B9BD5" />
+        <Ionicons name="mail" size={18} color="#5B9BD5" />
         <TextInput
           style={styles.input}
           placeholder="E-mail"
@@ -82,13 +85,9 @@ export default function ProfessorLogin() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', padding: 24, paddingTop: 60, backgroundColor: '#FFF', gap: 14 },
-  onda: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 90,
-    backgroundColor: '#D6EBFB', borderBottomLeftRadius: 60, borderBottomRightRadius: 60,
-  },
-  logoLinha: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20 },
-  logoPalavra: { fontSize: 18, fontWeight: 'bold', color: '#0D47A1' },
-  logoFalada: { fontSize: 18, fontWeight: 'bold', color: '#1E88E5', marginTop: -4 },
+  logoLinha: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 40, zIndex: 1 },
+  logoPalavra: { fontSize: 18, fontWeight: 'bold', color: '#1E88E5' },
+  logoFalada: { fontSize: 18, fontWeight: 'bold', color: '#0D3B7A', marginTop: -4 },
   titulo: { fontSize: 22, fontWeight: 'bold', color: '#1565C0', textAlign: 'center', marginVertical: 10 },
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#EAF4FE',

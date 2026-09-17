@@ -14,7 +14,9 @@ export default function TarefaDetalhe() {
   const config = identificarTipoPorTitulo(titulo ?? '') ?? TIPOS_TAREFA[1];
   const conteudo = extrairConteudo(titulo ?? '', config);
   const tokens = config.tipo === 'ouvir_repetir' ? conteudo.split(' ') : conteudo.split('');
-  const coresTile = ['#BBDEFB', '#C8E6C9', '#D1C4E9', '#FFE0B2'];
+  const coresTile = ['#BBDEFB', '#C8E6C9'];
+  const corResultado = '#D1C4E9';
+  const ehUltimoTokenDoBlend = (index: number) => config.tipo === 'ouvir_repetir' && index === tokens.length - 1;
 
   function handleRepeti() {
     stopSpeech();
@@ -36,7 +38,7 @@ export default function TarefaDetalhe() {
           <Ionicons name={config.icone} size={26} color="#FFF" />
         </View>
         <View>
-          <Text style={styles.tipoLabel}>{config.label}</Text>
+          <Text style={styles.tipoLabel}>{config.prefixo}</Text>
           <Text style={styles.conteudoGrande}>{conteudo}</Text>
           <Text style={styles.categoria}>{config.categoria}</Text>
         </View>
@@ -46,12 +48,13 @@ export default function TarefaDetalhe() {
         <View style={styles.tiles}>
           {tokens.map((token, index) => {
             const falavel = !SIMBOLOS_MUDOS.includes(token);
+            const cor = ehUltimoTokenDoBlend(index) ? corResultado : coresTile[index % coresTile.length];
             return (
               <TouchableOpacity
                 key={`${token}-${index}`}
                 disabled={!falavel}
                 activeOpacity={falavel ? 0.6 : 1}
-                style={[styles.tile, { backgroundColor: coresTile[index % coresTile.length] }]}
+                style={[styles.tile, { backgroundColor: cor }, ehUltimoTokenDoBlend(index) && styles.tileResultado]}
                 onPress={() => playSpeech(token)}
               >
                 <Text style={styles.tileTexto}>{token}</Text>
@@ -104,6 +107,7 @@ const styles = StyleSheet.create({
   },
   tiles: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
   tile: { width: 56, height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  tileResultado: { width: 72, height: 56 },
   tileTexto: { fontSize: 24, fontWeight: 'bold', color: '#0D47A1' },
   instrucaoLinha: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: 10 },
   instrucaoTexto: { fontSize: 14, color: '#37474F', flexShrink: 1 },

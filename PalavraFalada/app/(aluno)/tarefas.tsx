@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AlunoTabBar } from '@/components/aluno-tab-bar';
 import { supabase } from '@/services/supabase';
-import { TAREFAS_EXEMPLO, identificarTipoPorTitulo } from '@/constants/tarefas';
+import { TAREFAS_EXEMPLO, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
 
 type Tarefa = { id: string; titulo: string };
 
@@ -61,7 +61,7 @@ export default function TarefasDaTurma() {
       </View>
 
       <View style={styles.banner}>
-        <Ionicons name="flag" size={32} color="#FFF" />
+        <Ionicons name="locate" size={32} color="#FFF" />
         <View style={{ flex: 1 }}>
           <Text style={styles.bannerTitulo}>Pequenos passos, grandes conquistas!</Text>
           <Text style={styles.bannerTexto}>Aqui estão as tarefas que você tem para hoje.</Text>
@@ -77,6 +77,7 @@ export default function TarefasDaTurma() {
           contentContainerStyle={{ padding: 20, paddingBottom: 10, gap: 12 }}
           renderItem={({ item }) => {
             const config = identificarTipoPorTitulo(item.titulo);
+            const conteudo = config ? extrairConteudo(item.titulo, config) : item.titulo;
             return (
               <TouchableOpacity
                 style={styles.card}
@@ -91,8 +92,9 @@ export default function TarefasDaTurma() {
                   <Ionicons name={config?.icone ?? 'document-text'} size={22} color="#FFF" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitulo}>{item.titulo}</Text>
-                  <Text style={styles.cardCategoria}>{config?.categoria ?? 'Tarefa'}</Text>
+                  <Text style={styles.cardPrefixo}>{config?.prefixo ?? 'Tarefa'}</Text>
+                  <Text style={styles.cardConteudo}>{conteudo}</Text>
+                  <Text style={styles.cardCategoria}>{config?.categoria ?? ''}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#1565C0" />
               </TouchableOpacity>
@@ -128,7 +130,8 @@ const styles = StyleSheet.create({
     borderRadius: 14, padding: 14,
   },
   icone: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  cardTitulo: { fontSize: 15, fontWeight: '700', color: '#0D47A1' },
+  cardPrefixo: { fontSize: 13, color: '#37474F' },
+  cardConteudo: { fontSize: 17, fontWeight: '700', color: '#0D47A1' },
   cardCategoria: { fontSize: 12, color: '#8E8E93', marginTop: 2 },
   avisoExemplo: { textAlign: 'center', fontSize: 11, color: '#B26A00', paddingBottom: 8 },
 });
