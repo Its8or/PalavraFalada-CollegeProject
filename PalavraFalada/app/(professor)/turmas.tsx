@@ -1,14 +1,47 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '@/services/supabase';
 
-// Mock só pra tela visual - listagem real de turmas/alunos fica pra outra task
-const ALUNOS_EXEMPLO = [
-  { id: '1', nome: 'Aluno 1', cor: '#BBDEFB' },
-  { id: '2', nome: 'Aluno 2', cor: '#F8BBD0' },
-  { id: '3', nome: 'Aluno 3', cor: '#C8E6C9' },
-];
+type Turma = { id: string; nome: string };
+type Aluno = { id: string; nome: string };
 
 export default function TurmasScreen() {
+  const router = useRouter();
+  const [nomeProfessor, setNomeProfessor] = useState('Professor');
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [alunos, setAlunos] = useState<Aluno[] | null>(null);
+
+  const carregar = useCallback(async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      const nome = (userData.user.user_metadata?.nome as string | undefined) ?? userData.user.email ?? 'Professor';
+      setNomeProfessor(nome);
+    }
+
+    const { data: turmasData } = await supabase.from('turmas').select('id, nome').order('nome');
+    setTurmas(turmasData ?? []);
+
+    // Tabela "alunos" ainda não existe no schema atual - se não existir, não quebra a tela
+    const { data: alunosData, error: alunosError } = await supabase.from('alunos').select('id, nome').limit(10);
+    setAlunos(alunosError ? null : (alunosData ?? []));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [carregar])
+  );
+
+  function handleQrCode() {
+    if (turmas.length === 0) {
+      Alert.alert('Nenhuma turma ainda', 'Crie uma turma primeiro pra gerar o QR Code dela.');
+      return;
+    }
+    router.push({ pathname: '/(professor)/turma/[id]/qrcode', params: { id: turmas[0].id } });
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 50 }}>
@@ -22,13 +55,12 @@ export default function TurmasScreen() {
           </View>
           <View style={styles.perfil}>
             <Ionicons name="person-circle" size={30} color="#90CAF9" />
-            <Text style={styles.perfilNome}>Profª Ana Silva</Text>
-            <Ionicons name="chevron-down" size={16} color="#1565C0" />
+            <Text style={styles.perfilNome} numberOfLines={1}>{nomeProfessor}</Text>
           </View>
         </View>
         <Text style={styles.subtitulo}>Professor</Text>
 
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={() => router.push('/(professor)/minhas-turmas')}>
           <View style={[styles.cardIcone, { backgroundColor: '#64B5F6' }]}>
             <Ionicons name="people" size={26} color="#FFF" />
           </View>
@@ -39,7 +71,7 @@ export default function TurmasScreen() {
           <Ionicons name="chevron-forward" size={20} color="#1565C0" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={handleQrCode}>
           <View style={[styles.cardIcone, { backgroundColor: '#81C784' }]}>
             <Ionicons name="qr-code" size={26} color="#FFF" />
           </View>
@@ -56,19 +88,24 @@ export default function TurmasScreen() {
         </View>
 
         <View style={styles.listaAlunos}>
-          {ALUNOS_EXEMPLO.map((aluno, index) => (
-            <View key={aluno.id} style={[styles.alunoItem, index === ALUNOS_EXEMPLO.length - 1 && { borderBottomWidth: 0 }]}>
-              <View style={[styles.avatar, { backgroundColor: aluno.cor }]}>
-                <Ionicons name="person" size={20} color="#FFF" />
+          {alunos === null ? (
+            <Text style={styles.alunosAviso}>Cadastro de alunos ainda não disponível.</Text>
+          ) : alunos.length === 0 ? (
+            <Text style={styles.alunosAviso}>Nenhum aluno entrou em uma turma ainda.</Text>
+          ) : (
+            alunos.map((aluno, index) => (
+              <View key={aluno.id} style={[styles.alunoItem, index === alunos.length - 1 && { borderBottomWidth: 0 }]}>
+                <View style={styles.avatar}>
+                  <Ionicons name="person" size={20} color="#FFF" />
+                </View>
+                <Text style={styles.alunoNome}>{aluno.nome}</Text>
               </View>
-              <Text style={styles.alunoNome}>{aluno.nome}</Text>
-              <Ionicons name="chevron-forward" size={18} color="#1565C0" />
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.botaoNovo}>
+      <TouchableOpacity style={styles.botaoNovo} onPress={() => router.push('/(professor)/nova-turma')}>
         <Ionicons name="add" size={28} color="#FFF" />
       </TouchableOpacity>
     </View>
@@ -81,7 +118,7 @@ const styles = StyleSheet.create({
   logoLinha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoPalavra: { fontSize: 16, fontWeight: 'bold', color: '#0D47A1' },
   logoFalada: { fontSize: 16, fontWeight: 'bold', color: '#1E88E5', marginTop: -4 },
-  perfil: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  perfil: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: 140 },
   perfilNome: { fontWeight: 'bold', color: '#0D47A1' },
   subtitulo: { fontSize: 22, fontWeight: 'bold', color: '#0D47A1', marginTop: 12, marginBottom: 16 },
   card: {
@@ -94,11 +131,12 @@ const styles = StyleSheet.create({
   alunosHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 10 },
   alunosTitulo: { fontSize: 20, fontWeight: 'bold', color: '#0D47A1' },
   listaAlunos: { backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: 16 },
+  alunosAviso: { paddingVertical: 20, textAlign: 'center', color: '#8E8E93' },
   alunoItem: {
     flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: '#EEE',
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#90CAF9', alignItems: 'center', justifyContent: 'center' },
   alunoNome: { flex: 1, fontWeight: 'bold', color: '#0D47A1' },
   botaoNovo: {
     position: 'absolute', right: 24, bottom: 30, width: 56, height: 56, borderRadius: 28,

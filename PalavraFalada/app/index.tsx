@@ -15,7 +15,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.botaoAluno} onPress={() => router.push('/(aluno)/login')}>
+      <TouchableOpacity style={styles.botaoAluno} onPress={() => router.push('/(aluno)/escanear')}>
         <Ionicons name="person" size={20} color="#FFF" />
         <Text style={styles.botaoAlunoTexto}>Sou aluno</Text>
       </TouchableOpacity>

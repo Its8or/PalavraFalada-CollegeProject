@@ -2,16 +2,24 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AlunoTabBar } from '@/components/aluno-tab-bar';
-import { identificarTipoPorTitulo, extrairConteudo, TIPOS_TAREFA } from '@/constants/tarefas';
+import { identificarTipoPorTitulo, extrairConteudo, construirFalaCompleta, TIPOS_TAREFA } from '@/constants/tarefas';
+import { playSpeech, stopSpeech } from '@/services/speech';
+
+const SIMBOLOS_MUDOS = ['+', '='];
 
 export default function TarefaDetalhe() {
-  const { titulo } = useLocalSearchParams<{ titulo: string }>();
+  const { id, titulo, nome, turmaId } = useLocalSearchParams<{ id: string; titulo: string; nome?: string; turmaId?: string }>();
   const router = useRouter();
 
   const config = identificarTipoPorTitulo(titulo ?? '') ?? TIPOS_TAREFA[1];
   const conteudo = extrairConteudo(titulo ?? '', config);
   const tokens = config.tipo === 'ouvir_repetir' ? conteudo.split(' ') : conteudo.split('');
   const coresTile = ['#BBDEFB', '#C8E6C9', '#D1C4E9', '#FFE0B2'];
+
+  function handleRepeti() {
+    stopSpeech();
+    router.push({ pathname: '/(aluno)/parabens', params: { id, nome, turmaId } });
+  }
 
   return (
     <View style={styles.container}>
@@ -36,11 +44,20 @@ export default function TarefaDetalhe() {
 
       <View style={styles.cardAtividade}>
         <View style={styles.tiles}>
-          {tokens.map((token, index) => (
-            <View key={`${token}-${index}`} style={[styles.tile, { backgroundColor: coresTile[index % coresTile.length] }]}>
-              <Text style={styles.tileTexto}>{token}</Text>
-            </View>
-          ))}
+          {tokens.map((token, index) => {
+            const falavel = !SIMBOLOS_MUDOS.includes(token);
+            return (
+              <TouchableOpacity
+                key={`${token}-${index}`}
+                disabled={!falavel}
+                activeOpacity={falavel ? 0.6 : 1}
+                style={[styles.tile, { backgroundColor: coresTile[index % coresTile.length] }]}
+                onPress={() => playSpeech(token)}
+              >
+                <Text style={styles.tileTexto}>{token}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.instrucaoLinha}>
@@ -51,12 +68,11 @@ export default function TarefaDetalhe() {
           </Text>
         </View>
 
-        {/* Botão só visual por enquanto - integração com playSpeech fica pra próxima etapa */}
-        <TouchableOpacity style={styles.botaoPlay}>
+        <TouchableOpacity style={styles.botaoPlay} onPress={() => playSpeech(construirFalaCompleta(config, conteudo))}>
           <Ionicons name="play" size={30} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaoRepeti} onPress={() => router.push('/(aluno)/parabens')}>
+        <TouchableOpacity style={styles.botaoRepeti} onPress={handleRepeti}>
           <Ionicons name="mic" size={20} color="#FFF" />
           <Text style={styles.botaoRepetiTexto}>Já repeti</Text>
         </TouchableOpacity>

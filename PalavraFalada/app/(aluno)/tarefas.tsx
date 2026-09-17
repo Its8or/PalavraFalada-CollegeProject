@@ -1,11 +1,54 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AlunoTabBar } from '@/components/aluno-tab-bar';
+import { supabase } from '@/services/supabase';
 import { TAREFAS_EXEMPLO, identificarTipoPorTitulo } from '@/constants/tarefas';
+
+type Tarefa = { id: string; titulo: string };
 
 export default function TarefasDaTurma() {
   const router = useRouter();
+  const { nome, turmaId } = useLocalSearchParams<{ nome?: string; turmaId?: string }>();
+
+  const [tarefas, setTarefas] = useState<Tarefa[]>(TAREFAS_EXEMPLO);
+  const [carregando, setCarregando] = useState(false);
+  const [usandoExemplo, setUsandoExemplo] = useState(true);
+
+  const buscarTarefas = useCallback(async () => {
+    // Sem turma vinculada ainda (aluno entrou sem escanear QR Code): fica no mock de exemplo
+    if (!turmaId) {
+      setTarefas(TAREFAS_EXEMPLO);
+      setUsandoExemplo(true);
+      return;
+    }
+
+    setCarregando(true);
+    const { data, error } = await supabase
+      .from('tarefas')
+      .select('id, titulo')
+      .eq('turma_id', turmaId)
+      .order('created_at', { ascending: false });
+    setCarregando(false);
+
+    // Sem policy pública de leitura pro aluno ainda, o select acima é barrado por RLS -
+    // nesse caso caímos de volta pro exemplo em vez de mostrar tela vazia/quebrada
+    if (error || !data || data.length === 0) {
+      setTarefas(TAREFAS_EXEMPLO);
+      setUsandoExemplo(true);
+      return;
+    }
+
+    setTarefas(data);
+    setUsandoExemplo(false);
+  }, [turmaId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      buscarTarefas();
+    }, [buscarTarefas])
+  );
 
   return (
     <View style={styles.container}>
@@ -25,29 +68,42 @@ export default function TarefasDaTurma() {
         </View>
       </View>
 
-      <FlatList
-        data={TAREFAS_EXEMPLO}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, paddingBottom: 10, gap: 12 }}
-        renderItem={({ item }) => {
-          const config = identificarTipoPorTitulo(item.titulo);
-          return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push({ pathname: '/(aluno)/tarefa/[id]', params: { id: item.id, titulo: item.titulo } })}
-            >
-              <View style={[styles.icone, { backgroundColor: config?.cor ?? '#999' }]}>
-                <Ionicons name={config?.icone ?? 'document-text'} size={22} color="#FFF" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitulo}>{item.titulo}</Text>
-                <Text style={styles.cardCategoria}>{config?.categoria ?? 'Tarefa'}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#1565C0" />
-            </TouchableOpacity>
-          );
-        }}
-      />
+      {carregando ? (
+        <ActivityIndicator style={{ marginTop: 30 }} />
+      ) : (
+        <FlatList
+          data={tarefas}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 20, paddingBottom: 10, gap: 12 }}
+          renderItem={({ item }) => {
+            const config = identificarTipoPorTitulo(item.titulo);
+            return (
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(aluno)/tarefa/[id]',
+                    params: { id: item.id, titulo: item.titulo, nome, turmaId },
+                  })
+                }
+              >
+                <View style={[styles.icone, { backgroundColor: config?.cor ?? '#999' }]}>
+                  <Ionicons name={config?.icone ?? 'document-text'} size={22} color="#FFF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitulo}>{item.titulo}</Text>
+                  <Text style={styles.cardCategoria}>{config?.categoria ?? 'Tarefa'}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#1565C0" />
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
+
+      {usandoExemplo && turmaId ? (
+        <Text style={styles.avisoExemplo}>Mostrando tarefas de exemplo (sem acesso à turma real ainda)</Text>
+      ) : null}
 
       <AlunoTabBar />
     </View>
@@ -74,4 +130,5 @@ const styles = StyleSheet.create({
   icone: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   cardTitulo: { fontSize: 15, fontWeight: '700', color: '#0D47A1' },
   cardCategoria: { fontSize: 12, color: '#8E8E93', marginTop: 2 },
+  avisoExemplo: { textAlign: 'center', fontSize: 11, color: '#B26A00', paddingBottom: 8 },
 });

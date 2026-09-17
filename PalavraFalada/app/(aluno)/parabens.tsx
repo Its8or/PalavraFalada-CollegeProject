@@ -1,9 +1,26 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { playSpeech } from '@/services/speech';
+import { TAREFAS_EXEMPLO } from '@/constants/tarefas';
 
 export default function TarefaConcluida() {
   const router = useRouter();
+  const { id, nome, turmaId } = useLocalSearchParams<{ id?: string; nome?: string; turmaId?: string }>();
+
+  const indiceAtual = TAREFAS_EXEMPLO.findIndex((tarefa) => tarefa.id === id);
+  const proxima = indiceAtual >= 0 ? TAREFAS_EXEMPLO[indiceAtual + 1] : undefined;
+
+  function handleProximaTarefa() {
+    if (!proxima) {
+      router.push({ pathname: '/(aluno)/tarefas', params: { nome, turmaId } });
+      return;
+    }
+    router.push({
+      pathname: '/(aluno)/tarefa/[id]',
+      params: { id: proxima.id, titulo: proxima.titulo, nome, turmaId },
+    });
+  }
 
   return (
     <View style={styles.container}>
@@ -20,16 +37,21 @@ export default function TarefaConcluida() {
         <Text style={styles.parabens}>Parabéns!</Text>
         <Text style={styles.subtexto}>Você concluiu a tarefa com sucesso!</Text>
 
-        {/* Botão só visual por enquanto - integração com playSpeech fica pra próxima etapa */}
-        <TouchableOpacity style={styles.botaoSom}>
+        <TouchableOpacity
+          style={styles.botaoSom}
+          onPress={() => playSpeech('Parabéns, você concluiu a tarefa com sucesso!')}
+        >
           <Ionicons name="volume-high" size={26} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaoProxima} onPress={() => router.push('/(aluno)/tarefas')}>
-          <Text style={styles.botaoProximaTexto}>Próxima Tarefa</Text>
+        <TouchableOpacity style={styles.botaoProxima} onPress={handleProximaTarefa}>
+          <Text style={styles.botaoProximaTexto}>{proxima ? 'Próxima Tarefa' : 'Ver Todas as Tarefas'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaoVoltar} onPress={() => router.push('/(aluno)/tarefas')}>
+        <TouchableOpacity
+          style={styles.botaoVoltar}
+          onPress={() => router.push({ pathname: '/(aluno)/tarefas', params: { nome, turmaId } })}
+        >
           <Text style={styles.botaoVoltarTexto}>Voltar para Tarefas</Text>
         </TouchableOpacity>
       </View>

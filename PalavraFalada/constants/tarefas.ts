@@ -29,6 +29,18 @@ export function extrairConteudo(titulo: string, config: ConfigTipoTarefa) {
   return titulo.slice(config.prefixo.length).trim();
 }
 
+// Texto pronunciável pro botão de play: tira os símbolos "+"/"=" do blend
+// e a lacuna "_" da palavra incompleta, já que isso não deve ser falado literalmente
+export function construirFalaCompleta(config: ConfigTipoTarefa, conteudo: string) {
+  if (config.tipo === 'ouvir_repetir') {
+    return conteudo
+      .split(' ')
+      .filter((parte) => parte !== '+' && parte !== '=')
+      .join(', ');
+  }
+  return conteudo.replace(/_/g, '');
+}
+
 // Mock só pra telas de exemplo (ainda sem busca real no Supabase pro lado do aluno)
 export const TAREFAS_EXEMPLO = [
   { id: '1', titulo: 'Ouvir e repetir B + A = BA' },

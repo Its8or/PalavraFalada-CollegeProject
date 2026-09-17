@@ -1,14 +1,36 @@
 import { useState } from 'react';
-import { View, TextInput, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '@/services/supabase';
 
-// Tela só visual por enquanto - o cadastro de verdade (supabase.auth.signUp) fica pra depois
 export default function CadastroProfessor() {
   const router = useRouter();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [cadastrando, setCadastrando] = useState(false);
+
+  async function handleCadastrar() {
+    if (!nome.trim() || !email.trim() || !senha) return;
+
+    setCadastrando(true);
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: senha,
+      options: { data: { nome: nome.trim() } },
+    });
+    setCadastrando(false);
+
+    if (error) {
+      Alert.alert('Erro ao cadastrar', error.message);
+      return;
+    }
+
+    Alert.alert('Cadastro realizado', 'Confirme seu e-mail (se exigido) e faça login.', [
+      { text: 'OK', onPress: () => router.push('/(professor)/login') },
+    ]);
+  }
 
   return (
     <View style={styles.container}>
@@ -48,8 +70,8 @@ export default function CadastroProfessor() {
         <TextInput style={styles.input} placeholder="Senha" value={senha} onChangeText={setSenha} secureTextEntry />
       </View>
 
-      <TouchableOpacity style={styles.botaoCadastrar} onPress={() => router.push('/(professor)/login')}>
-        <Text style={styles.botaoCadastrarTexto}>CADASTRAR</Text>
+      <TouchableOpacity style={styles.botaoCadastrar} onPress={handleCadastrar} disabled={cadastrando}>
+        {cadastrando ? <ActivityIndicator color="#FFF" /> : <Text style={styles.botaoCadastrarTexto}>CADASTRAR</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/(professor)/login')}>
