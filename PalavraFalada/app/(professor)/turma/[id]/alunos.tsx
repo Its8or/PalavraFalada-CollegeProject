@@ -14,7 +14,6 @@ export default function AlunosNaTurma() {
 
   const buscarAlunos = useCallback(async () => {
     setCarregando(true);
-    // Tabela "alunos" ainda não existe no schema atual - trata a ausência sem quebrar a tela
     const { data, error } = await supabase.from('alunos').select('id, nome').eq('turma_id', id);
     setAlunos(error ? null : (data ?? []));
     setCarregando(false);
@@ -39,7 +38,7 @@ export default function AlunosNaTurma() {
       {carregando ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
       ) : alunos === null ? (
-        <Text style={styles.aviso}>Cadastro de alunos ainda não disponível pra essa turma.</Text>
+        <Text style={styles.aviso}>Não foi possível carregar os alunos dessa turma.</Text>
       ) : alunos.length === 0 ? (
         <Text style={styles.aviso}>Nenhum aluno entrou nessa turma ainda.</Text>
       ) : (

@@ -3,6 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 
+// Sem caracteres que se confundem fácil (0/O, 1/I) - vai pro QR Code e pro
+// campo de digitar manualmente, então precisa ser curto e fácil de bater o olho
+const CARACTERES_CODIGO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function gerarCodigoTurma() {
+  let codigo = '';
+  for (let i = 0; i < 6; i++) {
+    codigo += CARACTERES_CODIGO[Math.floor(Math.random() * CARACTERES_CODIGO.length)];
+  }
+  return codigo;
+}
+
 export default function NovaTurma() {
   const router = useRouter();
   const [nome, setNome] = useState('');
@@ -23,6 +35,7 @@ export default function NovaTurma() {
     const { error } = await supabase.from('turmas').insert({
       nome: nome.trim(),
       professor_id: userData.user.id,
+      codigo: gerarCodigoTurma(),
     });
     setSalvando(false);
 

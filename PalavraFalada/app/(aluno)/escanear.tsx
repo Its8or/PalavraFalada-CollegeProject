@@ -1,20 +1,40 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '@/services/supabase';
 
 export default function EscanearQrCode() {
   const router = useRouter();
   const [permissao, solicitarPermissao] = useCameraPermissions();
   const [jaLeu, setJaLeu] = useState(false);
+  const [buscando, setBuscando] = useState(false);
   const [idManual, setIdManual] = useState('');
 
-  function handleCodigoLido(turmaId: string) {
+  async function handleCodigoLido(codigo: string) {
     // Evita ler o mesmo QR várias vezes seguidas enquanto a câmera continua ligada
     if (jaLeu) return;
     setJaLeu(true);
-    router.replace({ pathname: '/(aluno)/login', params: { turmaId } });
+    setBuscando(true);
+
+    // O QR/campo manual carrega só o código curto da turma - aqui a gente
+    // descobre o id real dela pra vincular o aluno depois
+    const { data, error } = await supabase
+      .from('turmas')
+      .select('id')
+      .eq('codigo', codigo.trim().toUpperCase())
+      .single();
+
+    setBuscando(false);
+
+    if (error || !data) {
+      Alert.alert('Código inválido', 'Não encontramos nenhuma turma com esse código.');
+      setJaLeu(false);
+      return;
+    }
+
+    router.replace({ pathname: '/(aluno)/login', params: { turmaId: data.id } });
   }
 
   if (!permissao) {
@@ -54,16 +74,18 @@ export default function EscanearQrCode() {
           <View style={styles.manualBox}>
             <TextInput
               style={styles.manualInput}
-              placeholder="Ou cole o ID da turma aqui"
+              placeholder="Ou digite o código da turma"
               placeholderTextColor="#CCC"
               value={idManual}
               onChangeText={setIdManual}
+              autoCapitalize="characters"
             />
             <TouchableOpacity
               style={styles.manualBotao}
               onPress={() => idManual.trim() && handleCodigoLido(idManual.trim())}
+              disabled={buscando}
             >
-              <Text style={styles.manualBotaoTexto}>Entrar</Text>
+              {buscando ? <ActivityIndicator color="#FFF" /> : <Text style={styles.manualBotaoTexto}>Entrar</Text>}
             </TouchableOpacity>
           </View>
         )}

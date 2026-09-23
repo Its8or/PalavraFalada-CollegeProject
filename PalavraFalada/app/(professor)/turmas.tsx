@@ -24,7 +24,6 @@ export default function TurmasScreen() {
     const { data: turmasData } = await supabase.from('turmas').select('id, nome').order('nome');
     setTurmas(turmasData ?? []);
 
-    // Tabela "alunos" ainda não existe no schema atual - se não existir, não quebra a tela
     const { data: alunosData, error: alunosError } = await supabase.from('alunos').select('id, nome').limit(10);
     setAlunos(alunosError ? null : (alunosData ?? []));
   }, []);
@@ -91,7 +90,7 @@ export default function TurmasScreen() {
 
         <View style={styles.listaAlunos}>
           {alunos === null ? (
-            <Text style={styles.alunosAviso}>Cadastro de alunos ainda não disponível.</Text>
+            <Text style={styles.alunosAviso}>Não foi possível carregar os alunos.</Text>
           ) : alunos.length === 0 ? (
             <Text style={styles.alunosAviso}>Nenhum aluno entrou em uma turma ainda.</Text>
           ) : (
