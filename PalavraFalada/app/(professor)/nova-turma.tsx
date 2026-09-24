@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 // Sem caracteres que se confundem fácil (0/O, 1/I) - vai pro QR Code e pro
 // campo de digitar manualmente, então precisa ser curto e fácil de bater o olho
@@ -18,6 +19,7 @@ function gerarCodigoTurma() {
 
 export default function NovaTurma() {
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const { turmaId } = useLocalSearchParams<{ turmaId?: string }>();
   const modoEdicao = !!turmaId;
 
@@ -45,7 +47,7 @@ export default function NovaTurma() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
       setSalvando(false);
-      Alert.alert('Sessão expirada', 'Faça login novamente.');
+      alertar('Sessão expirada', 'Faça login novamente.');
       router.replace('/(professor)/login');
       return;
     }
@@ -61,11 +63,11 @@ export default function NovaTurma() {
       setSalvando(false);
 
       if (error) {
-        Alert.alert('Erro ao salvar turma', error.message);
+        alertar('Erro ao salvar turma', error.message);
         return;
       }
       if (!data || data.length === 0) {
-        Alert.alert('Não foi possível salvar', 'Você não tem permissão pra editar essa turma.');
+        alertar('Não foi possível salvar', 'Você não tem permissão pra editar essa turma.');
         return;
       }
 
@@ -81,7 +83,7 @@ export default function NovaTurma() {
     setSalvando(false);
 
     if (error) {
-      Alert.alert('Erro ao criar turma', error.message);
+      alertar('Erro ao criar turma', error.message);
       return;
     }
 

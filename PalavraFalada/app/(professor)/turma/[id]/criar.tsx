@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
 import { TIPOS_TAREFA, TipoTarefa, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 // Só o tipo "ouvir_repetir" salva o título como "Ouvir e repetir B + A = BA" -
 // pra editar precisa separar de volta em letraA/letraB (os outros tipos já
@@ -13,6 +14,7 @@ const REGEX_BLEND = /^(.+) \+ (.+) = .+$/;
 export default function CriarTarefa() {
   const { id: turmaId, tarefaId } = useLocalSearchParams<{ id: string; tarefaId?: string }>();
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const modoEdicao = !!tarefaId;
 
   const [tipo, setTipo] = useState<TipoTarefa>('falar_palavra');
@@ -81,11 +83,11 @@ export default function CriarTarefa() {
           .select();
 
         if (error) {
-          Alert.alert('Erro ao salvar tarefa', error.message);
+          alertar('Erro ao salvar tarefa', error.message);
           return;
         }
         if (!data || data.length === 0) {
-          Alert.alert('Não foi possível salvar', 'Você não tem permissão pra editar essa tarefa.');
+          alertar('Não foi possível salvar', 'Você não tem permissão pra editar essa tarefa.');
           return;
         }
 
@@ -100,14 +102,14 @@ export default function CriarTarefa() {
 
       if (error) {
         console.log('Erro ao salvar tarefa:', error);
-        Alert.alert('Erro ao salvar tarefa', error.message);
+        alertar('Erro ao salvar tarefa', error.message);
         return;
       }
 
       router.back();
     } catch (erroInesperado) {
       console.log('Erro inesperado ao salvar tarefa:', erroInesperado);
-      Alert.alert('Erro inesperado ao salvar tarefa', String(erroInesperado));
+      alertar('Erro inesperado ao salvar tarefa', String(erroInesperado));
     } finally {
       setSalvando(false);
     }

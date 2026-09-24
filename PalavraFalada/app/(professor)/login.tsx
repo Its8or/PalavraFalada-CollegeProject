@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { LogoIcone } from '@/components/logo';
 import { WaveHeader } from '@/components/wave-header';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 export default function ProfessorLogin() {
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [entrando, setEntrando] = useState(false);
@@ -25,7 +27,7 @@ export default function ProfessorLogin() {
     setEntrando(false);
 
     if (error) {
-      Alert.alert('Erro ao entrar', error.message);
+      alertar('Erro ao entrar', error.message);
       return;
     }
 

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
 import { identificarTipoPorTitulo, extrairConteudo, construirFalaCompleta } from '@/constants/tarefas';
 import { playSpeech } from '@/services/speech';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 // Versão simples da tela de tarefa pro professor - só ouvir a pronúncia e
 // editar/excluir. Sem a quebra em "tiles" por letra que a tela do aluno tem
@@ -13,6 +14,7 @@ import { playSpeech } from '@/services/speech';
 export default function TarefaDoProfessor() {
   const { id: turmaId, tarefaId } = useLocalSearchParams<{ id: string; tarefaId: string }>();
   const router = useRouter();
+  const { alertar } = useAlertModal();
 
   const [titulo, setTitulo] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -31,7 +33,7 @@ export default function TarefaDoProfessor() {
   }, [tarefaId]);
 
   async function handleExcluir() {
-    Alert.alert('Excluir tarefa?', 'Essa ação não pode ser desfeita.', [
+    alertar('Excluir tarefa?', 'Essa ação não pode ser desfeita.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Excluir',
@@ -44,11 +46,11 @@ export default function TarefaDoProfessor() {
           setExcluindo(false);
 
           if (error) {
-            Alert.alert('Erro ao excluir', error.message);
+            alertar('Erro ao excluir', error.message);
             return;
           }
           if (!data || data.length === 0) {
-            Alert.alert('Não foi possível excluir', 'Você não tem permissão pra excluir essa tarefa.');
+            alertar('Não foi possível excluir', 'Você não tem permissão pra excluir essa tarefa.');
             return;
           }
 

@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 type Turma = { id: string; nome: string };
 
 export default function MinhasTurmas() {
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export default function MinhasTurmas() {
   );
 
   function handleExcluir(turma: Turma) {
-    Alert.alert('Excluir turma?', `Isso vai apagar "${turma.nome}" e todas as tarefas dela. Essa ação não pode ser desfeita.`, [
+    alertar('Excluir turma?', `Isso vai apagar "${turma.nome}" e todas as tarefas dela. Essa ação não pode ser desfeita.`, [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Excluir',
@@ -51,11 +53,11 @@ export default function MinhasTurmas() {
           setExcluindoId(null);
 
           if (error) {
-            Alert.alert('Erro ao excluir', error.message);
+            alertar('Erro ao excluir', error.message);
             return;
           }
           if (!data || data.length === 0) {
-            Alert.alert('Não foi possível excluir', 'Você não tem permissão pra excluir essa turma.');
+            alertar('Não foi possível excluir', 'Você não tem permissão pra excluir essa turma.');
             return;
           }
 
@@ -88,32 +90,36 @@ export default function MinhasTurmas() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20, gap: 12 }}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push({ pathname: '/(professor)/turma/[id]/tarefas', params: { id: item.id } })}
-            >
-              <View style={styles.icone}>
-                <Ionicons name="people" size={22} color="#FFF" />
-              </View>
-              <Text style={styles.cardNome}>{item.nome}</Text>
+            <View style={styles.card}>
               <TouchableOpacity
+                style={styles.cardToque}
+                onPress={() => router.push({ pathname: '/(professor)/turma/[id]/tarefas', params: { id: item.id } })}
+              >
+                <View style={styles.icone}>
+                  <Ionicons name="people" size={22} color="#FFF" />
+                </View>
+                <Text style={styles.cardNome}>{item.nome}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.botaoIcone}
                 onPress={() => router.push({ pathname: '/(professor)/turma/[id]/qrcode', params: { id: item.id } })}
               >
                 <Ionicons name="qr-code" size={22} color="#1565C0" />
               </TouchableOpacity>
               <TouchableOpacity
+                style={styles.botaoIcone}
                 onPress={() => router.push({ pathname: '/(professor)/nova-turma', params: { turmaId: item.id } })}
               >
                 <Ionicons name="pencil" size={20} color="#1565C0" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleExcluir(item)} disabled={excluindoId === item.id}>
+              <TouchableOpacity style={styles.botaoIcone} onPress={() => handleExcluir(item)} disabled={excluindoId === item.id}>
                 {excluindoId === item.id ? (
                   <ActivityIndicator size="small" color="#D32F2F" />
                 ) : (
                   <Ionicons name="trash" size={20} color="#D32F2F" />
                 )}
               </TouchableOpacity>
-            </TouchableOpacity>
+            </View>
           )}
         />
       )}
@@ -126,9 +132,11 @@ const styles = StyleSheet.create({
   botaoAcao: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   aviso: { textAlign: 'center', color: '#5C6B73', marginTop: 40, paddingHorizontal: 30 },
   card: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#FFF',
+    flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF',
     borderRadius: 14, padding: 14,
   },
+  cardToque: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  botaoIcone: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   icone: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#64B5F6', alignItems: 'center', justifyContent: 'center' },
   cardNome: { flex: 1, fontSize: 16, fontWeight: '700', color: '#0D47A1' },
 });

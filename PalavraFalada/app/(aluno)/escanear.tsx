@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
+import { useAlertModal } from '@/contexts/alert-modal';
 
 const REGEX_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function EscanearQrCode() {
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const [permissao, solicitarPermissao] = useCameraPermissions();
   const [jaLeu, setJaLeu] = useState(false);
   const [buscando, setBuscando] = useState(false);
@@ -39,7 +41,7 @@ export default function EscanearQrCode() {
     setBuscando(false);
 
     if (!turmaId) {
-      Alert.alert('Código inválido', 'Não encontramos nenhuma turma com esse código.', [
+      alertar('Código inválido', 'Não encontramos nenhuma turma com esse código.', [
         { text: 'Voltar', style: 'cancel', onPress: () => router.back() },
         { text: 'Tentar novamente', onPress: () => setJaLeu(false) },
       ]);
