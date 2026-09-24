@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator }
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
-import { TAREFAS_EXEMPLO, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
+import { TarefaCard } from '@/components/tarefa-card';
+import { TAREFAS_EXEMPLO } from '@/constants/tarefas';
 
 type Tarefa = { id: string; titulo: string };
 
@@ -14,16 +15,19 @@ export default function TarefasDaTurma() {
   const [tarefas, setTarefas] = useState<Tarefa[]>(TAREFAS_EXEMPLO);
   const [carregando, setCarregando] = useState(false);
   const [usandoExemplo, setUsandoExemplo] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   const buscarTarefas = useCallback(async () => {
     // Sem turma vinculada ainda (aluno entrou sem escanear QR Code): fica no mock de exemplo
     if (!turmaId) {
       setTarefas(TAREFAS_EXEMPLO);
       setUsandoExemplo(true);
+      setErro(null);
       return;
     }
 
     setCarregando(true);
+    setUsandoExemplo(false);
     const { data, error } = await supabase
       .from('tarefas')
       .select('id, titulo')
@@ -31,16 +35,14 @@ export default function TarefasDaTurma() {
       .order('created_at', { ascending: false });
     setCarregando(false);
 
-    // Sem policy pública de leitura pro aluno ainda, o select acima é barrado por RLS -
-    // nesse caso caímos de volta pro exemplo em vez de mostrar tela vazia/quebrada
-    if (error || !data || data.length === 0) {
-      setTarefas(TAREFAS_EXEMPLO);
-      setUsandoExemplo(true);
+    if (error) {
+      setErro(error.message);
+      setTarefas([]);
       return;
     }
 
-    setTarefas(data);
-    setUsandoExemplo(false);
+    setErro(null);
+    setTarefas(data ?? []);
   }, [turmaId]);
 
   useFocusEffect(
@@ -61,34 +63,31 @@ export default function TarefasDaTurma() {
 
       {carregando ? (
         <ActivityIndicator style={{ marginTop: 30 }} />
+      ) : erro ? (
+        <Text style={styles.aviso}>Não foi possível carregar as tarefas: {erro}</Text>
+      ) : tarefas.length === 0 ? (
+        <Text style={styles.aviso}>Nenhuma tarefa por aqui ainda.</Text>
       ) : (
         <FlatList
           data={tarefas}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20, paddingBottom: 10, gap: 12 }}
-          renderItem={({ item }) => {
-            const config = identificarTipoPorTitulo(item.titulo);
-            const conteudo = config ? extrairConteudo(item.titulo, config) : item.titulo;
-            return (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() =>
-                  router.push({
-                    pathname: '/(aluno)/tarefa/[id]',
-                    params: { id: item.id, titulo: item.titulo, nome, turmaId },
-                  })
-                }
-              >
-                <Text style={styles.cardConteudo}>{conteudo}</Text>
-                <Ionicons name="chevron-forward" size={20} color="#1565C0" />
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={({ item }) => (
+            <TarefaCard
+              titulo={item.titulo}
+              onPress={() =>
+                router.push({
+                  pathname: '/(aluno)/tarefa/[id]',
+                  params: { id: item.id, titulo: item.titulo, nome, turmaId },
+                })
+              }
+            />
+          )}
         />
       )}
 
-      {usandoExemplo && turmaId ? (
-        <Text style={styles.avisoExemplo}>Mostrando tarefas de exemplo (sem acesso à turma real ainda)</Text>
+      {usandoExemplo ? (
+        <Text style={styles.avisoExemplo}>Mostrando tarefas de exemplo (nenhuma turma escaneada ainda)</Text>
       ) : null}
     </View>
   );
@@ -101,10 +100,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingTop: 56, paddingBottom: 10,
   },
   headerTitulo: { fontSize: 20, fontWeight: 'bold', color: '#0D47A1' },
-  card: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14,
-    backgroundColor: '#F5F9FF', borderRadius: 14, padding: 16,
-  },
-  cardConteudo: { fontSize: 17, fontWeight: '700', color: '#0D47A1' },
+  aviso: { textAlign: 'center', color: '#5C6B73', marginTop: 40, paddingHorizontal: 30 },
   avisoExemplo: { textAlign: 'center', fontSize: 11, color: '#B26A00', paddingBottom: 8 },
 });

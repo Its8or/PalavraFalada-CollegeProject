@@ -29,7 +29,7 @@ export default function ProfessorLogin() {
       return;
     }
 
-    router.push('/(professor)/turmas');
+    router.replace('/(professor)/minhas-turmas');
   }
 
   return (

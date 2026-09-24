@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 
+const REGEX_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function EscanearQrCode() {
   const router = useRouter();
   const [permissao, solicitarPermissao] = useCameraPermissions();
@@ -12,29 +14,39 @@ export default function EscanearQrCode() {
   const [buscando, setBuscando] = useState(false);
   const [idManual, setIdManual] = useState('');
 
-  async function handleCodigoLido(codigo: string) {
-    // Evita ler o mesmo QR várias vezes seguidas enquanto a câmera continua ligada
+  async function handleCodigoLido(valorLido: string) {
+    // Evita ler o mesmo QR várias vezes seguidas enquanto a câmera continua ligada.
+    // Só volta a false quando o usuário confirmar "Tentar novamente" no Alert de
+    // erro (nunca sozinho), senão a câmera reabre o mesmo Alert em loop enquanto
+    // continuar apontada pro QR Code inválido.
     if (jaLeu) return;
     setJaLeu(true);
     setBuscando(true);
 
-    // O QR/campo manual carrega só o código curto da turma - aqui a gente
-    // descobre o id real dela pra vincular o aluno depois
-    const { data, error } = await supabase
-      .from('turmas')
-      .select('id')
-      .eq('codigo', codigo.trim().toUpperCase())
-      .single();
+    const valor = valorLido.trim();
+
+    // O QR/campo manual carrega o código curto da turma - aqui a gente descobre
+    // o id real dela pra vincular o aluno depois
+    const { data } = await supabase.from('turmas').select('id').eq('codigo', valor.toUpperCase()).maybeSingle();
+    let turmaId = data?.id;
+
+    // Turma criada antes do código curto existir ainda tem o id (uuid) cru no QR
+    if (!turmaId && REGEX_UUID.test(valor)) {
+      const { data: porId } = await supabase.from('turmas').select('id').eq('id', valor).maybeSingle();
+      turmaId = porId?.id;
+    }
 
     setBuscando(false);
 
-    if (error || !data) {
-      Alert.alert('Código inválido', 'Não encontramos nenhuma turma com esse código.');
-      setJaLeu(false);
+    if (!turmaId) {
+      Alert.alert('Código inválido', 'Não encontramos nenhuma turma com esse código.', [
+        { text: 'Voltar', style: 'cancel', onPress: () => router.back() },
+        { text: 'Tentar novamente', onPress: () => setJaLeu(false) },
+      ]);
       return;
     }
 
-    router.replace({ pathname: '/(aluno)/login', params: { turmaId: data.id } });
+    router.replace({ pathname: '/(aluno)/login', params: { turmaId } });
   }
 
   if (!permissao) {
