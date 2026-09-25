@@ -37,11 +37,7 @@ export default function TarefaDetalhe() {
         <View style={[styles.icone, { backgroundColor: config.cor }]}>
           <Ionicons name={config.icone} size={26} color="#FFF" />
         </View>
-        <View>
-          <Text style={styles.tipoLabel}>{config.prefixo}</Text>
-          <Text style={styles.conteudoGrande}>{conteudo}</Text>
-          <Text style={styles.categoria}>{config.categoria}</Text>
-        </View>
+        <Text style={styles.conteudoGrande}>{conteudo}</Text>
       </View>
 
       <View style={styles.cardAtividade}>
@@ -71,14 +67,15 @@ export default function TarefaDetalhe() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.botaoPlay} onPress={() => playSpeech(construirFalaCompleta(config, conteudo))}>
-          <Ionicons name="play" size={30} color="#FFF" />
-        </TouchableOpacity>
+        <View style={styles.botoesLinha}>
+          <TouchableOpacity style={styles.botaoPlay} onPress={() => playSpeech(construirFalaCompleta(config, conteudo))}>
+            <Ionicons name="play" size={30} color="#FFF" />
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaoRepeti} onPress={handleRepeti}>
-          <Ionicons name="mic" size={20} color="#FFF" />
-          <Text style={styles.botaoRepetiTexto}>Já repeti</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.botaoRepeti} onPress={handleRepeti}>
+            <Ionicons name="mic" size={30} color="#FFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <AlunoTabBar />
@@ -98,9 +95,7 @@ const styles = StyleSheet.create({
     margin: 20, marginBottom: 10, borderRadius: 16, padding: 16,
   },
   icone: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
-  tipoLabel: { fontSize: 13, color: '#5C6B73' },
   conteudoGrande: { fontSize: 22, fontWeight: 'bold', color: '#0D47A1' },
-  categoria: { fontSize: 12, color: '#8E8E93', marginTop: 2 },
   cardAtividade: {
     flex: 1, backgroundColor: '#FFF', marginHorizontal: 20, borderRadius: 16, padding: 20,
     alignItems: 'center', gap: 20,
@@ -112,13 +107,13 @@ const styles = StyleSheet.create({
   instrucaoLinha: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: 10 },
   instrucaoTexto: { fontSize: 14, color: '#37474F', flexShrink: 1 },
   instrucaoConteudo: { fontWeight: 'bold', fontSize: 18, color: '#0D47A1' },
+  botoesLinha: { flexDirection: 'row', gap: 20 },
   botaoPlay: {
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#1565C0',
     alignItems: 'center', justifyContent: 'center',
   },
   botaoRepeti: {
-    flexDirection: 'row', gap: 8, backgroundColor: '#1565C0', paddingVertical: 14,
-    borderRadius: 30, alignItems: 'center', justifyContent: 'center', width: '100%',
+    width: 64, height: 64, borderRadius: 32, backgroundColor: '#43A047',
+    alignItems: 'center', justifyContent: 'center',
   },
-  botaoRepetiTexto: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
 });

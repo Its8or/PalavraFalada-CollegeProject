@@ -2,25 +2,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { playSpeech } from '@/services/speech';
-import { TAREFAS_EXEMPLO } from '@/constants/tarefas';
 
 export default function TarefaConcluida() {
   const router = useRouter();
-  const { id, nome, turmaId } = useLocalSearchParams<{ id?: string; nome?: string; turmaId?: string }>();
-
-  const indiceAtual = TAREFAS_EXEMPLO.findIndex((tarefa) => tarefa.id === id);
-  const proxima = indiceAtual >= 0 ? TAREFAS_EXEMPLO[indiceAtual + 1] : undefined;
-
-  function handleProximaTarefa() {
-    if (!proxima) {
-      router.push({ pathname: '/(aluno)/tarefas', params: { nome, turmaId } });
-      return;
-    }
-    router.push({
-      pathname: '/(aluno)/tarefa/[id]',
-      params: { id: proxima.id, titulo: proxima.titulo, nome, turmaId },
-    });
-  }
+  const { nome, turmaId } = useLocalSearchParams<{ id?: string; nome?: string; turmaId?: string }>();
 
   return (
     <View style={styles.container}>
@@ -44,15 +29,11 @@ export default function TarefaConcluida() {
           <Ionicons name="volume-high" size={26} color="#FFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botaoProxima} onPress={handleProximaTarefa}>
-          <Text style={styles.botaoProximaTexto}>{proxima ? 'Próxima Tarefa' : 'Ver Todas as Tarefas'}</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.botaoVoltar}
           onPress={() => router.push({ pathname: '/(aluno)/tarefas', params: { nome, turmaId } })}
         >
-          <Text style={styles.botaoVoltarTexto}>Voltar para Tarefas</Text>
+          <Ionicons name="home" size={28} color="#FFF" />
         </TouchableOpacity>
       </View>
     </View>
@@ -74,11 +55,8 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28, backgroundColor: '#1565C0',
     alignItems: 'center', justifyContent: 'center', marginBottom: 10,
   },
-  botaoProxima: { backgroundColor: '#1565C0', paddingVertical: 16, borderRadius: 30, width: '100%', alignItems: 'center' },
-  botaoProximaTexto: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   botaoVoltar: {
-    borderWidth: 2, borderColor: '#1565C0', paddingVertical: 16, borderRadius: 30,
-    width: '100%', alignItems: 'center',
+    width: 64, height: 64, borderRadius: 32, backgroundColor: '#1565C0',
+    alignItems: 'center', justifyContent: 'center',
   },
-  botaoVoltarTexto: { color: '#1565C0', fontSize: 16, fontWeight: 'bold' },
 });

@@ -3,13 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LogoIcone } from '@/components/logo';
+import { supabase } from '@/services/supabase';
 
 export default function AlunoLogin() {
   const router = useRouter();
-  const { turmaId } = useLocalSearchParams(); // Captura o ID vindo do QR Code
+  const { turmaId } = useLocalSearchParams<{ turmaId?: string }>(); // Captura o ID vindo do QR Code
   const [nome, setNome] = useState('');
 
-  function handleEntrar() {
+  async function handleEntrar() {
+    if (!nome.trim()) return;
+
+    // Aluno não tem login/auth, então o cadastro na turma é feito aqui mesmo,
+    // com a chave anon (ver policy de insert em supabase/sql/001_criar_tabela_alunos.sql)
+    if (turmaId) {
+      const { error } = await supabase.from('alunos').insert({ nome: nome.trim(), turma_id: turmaId });
+      if (error) {
+        console.log('Erro ao cadastrar aluno na turma:', error);
+      }
+    }
+
     router.push({ pathname: '/(aluno)/tarefas', params: { nome, turmaId } });
   }
 
