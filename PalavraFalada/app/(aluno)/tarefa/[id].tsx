@@ -68,14 +68,24 @@ export default function TarefaDetalhe() {
         </View>
 
         <View style={styles.botoesLinha}>
-          <TouchableOpacity style={styles.botaoPlay} onPress={() => playSpeech(construirFalaCompleta(config, conteudo))}>
-            <Ionicons name="play" size={30} color="#FFF" />
-          </TouchableOpacity>
+          <View style={styles.botaoGrupo}>
+            <TouchableOpacity style={styles.botaoPlay} onPress={() => playSpeech(construirFalaCompleta(config, conteudo))}>
+              <Ionicons name="play" size={30} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.botaoLegenda}>Ouvir</Text>
+          </View>
 
-          <TouchableOpacity style={styles.botaoRepeti} onPress={handleRepeti}>
-            <Ionicons name="mic" size={30} color="#FFF" />
-          </TouchableOpacity>
+          <View style={styles.botaoGrupo}>
+            <TouchableOpacity style={styles.botaoRepeti} onPress={handleRepeti}>
+              <Ionicons name="checkmark" size={32} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.botaoLegenda}>Já repeti</Text>
+          </View>
         </View>
+
+        {/* Não tem reconhecimento de voz de verdade - é o aluno/professor
+            confirmando manualmente que a palavra foi repetida em voz alta */}
+        <Text style={styles.avisoConfirmacao}>Toque em ✓ depois de repetir a palavra em voz alta</Text>
       </View>
 
       <AlunoTabBar />
@@ -107,7 +117,8 @@ const styles = StyleSheet.create({
   instrucaoLinha: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: 10 },
   instrucaoTexto: { fontSize: 14, color: '#37474F', flexShrink: 1 },
   instrucaoConteudo: { fontWeight: 'bold', fontSize: 18, color: '#0D47A1' },
-  botoesLinha: { flexDirection: 'row', gap: 20 },
+  botoesLinha: { flexDirection: 'row', gap: 32 },
+  botaoGrupo: { alignItems: 'center', gap: 6 },
   botaoPlay: {
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#1565C0',
     alignItems: 'center', justifyContent: 'center',
@@ -116,4 +127,6 @@ const styles = StyleSheet.create({
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#43A047',
     alignItems: 'center', justifyContent: 'center',
   },
+  botaoLegenda: { fontSize: 12, color: '#5C6B73', fontWeight: '600' },
+  avisoConfirmacao: { fontSize: 12, color: '#8E8E93', textAlign: 'center' },
 });
