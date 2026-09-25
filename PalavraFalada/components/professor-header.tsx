@@ -7,7 +7,15 @@ import { ProfessorSideMenu } from './professor-side-menu';
 // Cabeçalho único reusado em toda tela do professor - cada tela custom tinha
 // o seu próprio, o que causava layout inconsistente e (junto com o header
 // nativo do Stack) cabeçalho duplicado
-export function ProfessorHeader({ titulo, acaoDireita }: { titulo: string; acaoDireita?: ReactNode }) {
+export function ProfessorHeader({
+  titulo,
+  acaoDireita,
+  turmaId,
+}: {
+  titulo: string;
+  acaoDireita?: ReactNode;
+  turmaId?: string;
+}) {
   const router = useRouter();
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -32,7 +40,7 @@ export function ProfessorHeader({ titulo, acaoDireita }: { titulo: string; acaoD
         </View>
       </View>
 
-      <ProfessorSideMenu visible={menuAberto} onClose={() => setMenuAberto(false)} />
+      <ProfessorSideMenu visible={menuAberto} onClose={() => setMenuAberto(false)} turmaId={turmaId} />
     </>
   );
 }

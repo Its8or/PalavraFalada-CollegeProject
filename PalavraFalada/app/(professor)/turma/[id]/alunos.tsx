@@ -27,7 +27,7 @@ export default function AlunosNaTurma() {
 
   return (
     <View style={styles.container}>
-      <ProfessorHeader titulo="Alunos da Turma" />
+      <ProfessorHeader titulo="Alunos da Turma" turmaId={id} />
 
       {carregando ? (
         <ActivityIndicator style={{ marginTop: 40 }} />

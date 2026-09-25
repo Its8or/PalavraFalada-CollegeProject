@@ -2,10 +2,9 @@
 -- Adiciona as policies de UPDATE/DELETE que faltam pro professor poder
 -- editar/excluir as próprias turmas e tarefas (hoje só existe SELECT/INSERT).
 --
--- Se algum "create policy" abaixo der erro de "policy already exists",
--- pode pular só aquele bloco e rodar o resto - não tenho como confirmar
--- de antemão quais policies já existem no seu projeto.
+-- Seguro rodar de novo mesmo se já tiver rodado antes.
 
+drop policy if exists "Professor atualiza as proprias turmas" on public.turmas;
 create policy "Professor atualiza as proprias turmas"
   on public.turmas
   for update
@@ -13,12 +12,14 @@ create policy "Professor atualiza as proprias turmas"
   using (professor_id = auth.uid())
   with check (professor_id = auth.uid());
 
+drop policy if exists "Professor exclui as proprias turmas" on public.turmas;
 create policy "Professor exclui as proprias turmas"
   on public.turmas
   for delete
   to authenticated
   using (professor_id = auth.uid());
 
+drop policy if exists "Professor atualiza tarefas das proprias turmas" on public.tarefas;
 create policy "Professor atualiza tarefas das proprias turmas"
   on public.tarefas
   for update
@@ -38,6 +39,7 @@ create policy "Professor atualiza tarefas das proprias turmas"
     )
   );
 
+drop policy if exists "Professor exclui tarefas das proprias turmas" on public.tarefas;
 create policy "Professor exclui tarefas das proprias turmas"
   on public.tarefas
   for delete

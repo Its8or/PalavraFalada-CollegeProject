@@ -3,13 +3,15 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
-import { TIPOS_TAREFA, TipoTarefa, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
+import { TIPOS_TAREFA, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
 import { useAlertModal } from '@/contexts/alert-modal';
 
-// Só o tipo "ouvir_repetir" salva o título como "Ouvir e repetir B + A = BA" -
-// pra editar precisa separar de volta em letraA/letraB (os outros tipos já
-// vêm prontos de extrairConteudo)
-const REGEX_BLEND = /^(.+) \+ (.+) = .+$/;
+// Formulário simplificado - só palavra, sem escolher tipo de tarefa. Toda
+// tarefa nova sai como "falar_palavra"; tarefas antigas de outros tipos
+// (completar/ouvir e repetir) continuam existindo e sendo lidas normalmente
+// em outras telas via identificarTipoPorTitulo, só não dá mais pra criar
+// esses tipos por aqui.
+const TIPO_UNICO = TIPOS_TAREFA.find((config) => config.tipo === 'falar_palavra')!;
 
 export default function CriarTarefa() {
   const { id: turmaId, tarefaId } = useLocalSearchParams<{ id: string; tarefaId?: string }>();
@@ -17,10 +19,7 @@ export default function CriarTarefa() {
   const { alertar } = useAlertModal();
   const modoEdicao = !!tarefaId;
 
-  const [tipo, setTipo] = useState<TipoTarefa>('falar_palavra');
   const [palavra, setPalavra] = useState('');
-  const [letraA, setLetraA] = useState('');
-  const [letraB, setLetraB] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [carregando, setCarregando] = useState(modoEdicao);
 
@@ -32,40 +31,18 @@ export default function CriarTarefa() {
       .eq('id', tarefaId)
       .single()
       .then(({ data }) => {
-        if (!data?.titulo) {
-          setCarregando(false);
-          return;
-        }
-        const config = identificarTipoPorTitulo(data.titulo);
-        if (config) {
-          setTipo(config.tipo);
-          const conteudo = extrairConteudo(data.titulo, config);
-          if (config.tipo === 'ouvir_repetir') {
-            const match = conteudo.match(REGEX_BLEND);
-            setLetraA(match?.[1] ?? '');
-            setLetraB(match?.[2] ?? '');
-          } else {
-            setPalavra(conteudo);
-          }
+        if (data?.titulo) {
+          const config = identificarTipoPorTitulo(data.titulo);
+          setPalavra(config ? extrairConteudo(data.titulo, config) : data.titulo);
         }
         setCarregando(false);
       });
   }, [tarefaId]);
 
-  const tipoSelecionado = TIPOS_TAREFA.find((config) => config.tipo === tipo)!;
-
-  const conteudoValido =
-    tipo === 'ouvir_repetir'
-      ? letraA.trim().length > 0 && letraB.trim().length > 0
-      : palavra.trim().length > 0;
+  const conteudoValido = palavra.trim().length > 0;
 
   function montarTitulo() {
-    if (tipo === 'ouvir_repetir') {
-      const a = letraA.trim().toUpperCase();
-      const b = letraB.trim().toUpperCase();
-      return `${tipoSelecionado.prefixo} ${a} + ${b} = ${a}${b}`;
-    }
-    return `${tipoSelecionado.prefixo} ${palavra.trim().toUpperCase()}`;
+    return `${TIPO_UNICO.prefixo} ${palavra.trim().toUpperCase()}`;
   }
 
   async function handleSalvar() {
@@ -117,60 +94,20 @@ export default function CriarTarefa() {
 
   return (
     <View style={styles.container}>
-      <ProfessorHeader titulo={modoEdicao ? 'Editar Tarefa' : 'Nova Tarefa'} />
+      <ProfessorHeader titulo={modoEdicao ? 'Editar Tarefa' : 'Nova Tarefa'} turmaId={turmaId} />
 
       {carregando ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
       ) : (
         <View style={styles.conteudo}>
-          <Text style={styles.label}>Tipo de tarefa</Text>
-          <View style={styles.tipos}>
-            {TIPOS_TAREFA.map((config) => (
-              <TouchableOpacity
-                key={config.tipo}
-                style={[styles.tipoBotao, { backgroundColor: tipo === config.tipo ? config.cor : '#EEE' }]}
-                onPress={() => setTipo(config.tipo)}
-              >
-                <Text style={{ color: tipo === config.tipo ? '#FFF' : '#333', fontWeight: '600' }}>
-                  {config.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {tipo === 'ouvir_repetir' ? (
-            <>
-              <Text style={styles.label}>Primeira letra/sílaba</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: B"
-                value={letraA}
-                onChangeText={setLetraA}
-                autoCapitalize="characters"
-              />
-              <Text style={styles.label}>Segunda letra/sílaba</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: A"
-                value={letraB}
-                onChangeText={setLetraB}
-                autoCapitalize="characters"
-              />
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>
-                {tipo === 'completar_palavra' ? 'Palavra com lacuna (use _ pra marcar o espaço)' : 'Palavra'}
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder={tipo === 'completar_palavra' ? 'Ex: CA_SA' : 'Ex: BOLA'}
-                value={palavra}
-                onChangeText={setPalavra}
-                autoCapitalize="characters"
-              />
-            </>
-          )}
+          <Text style={styles.label}>Palavra</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: BOLA"
+            value={palavra}
+            onChangeText={setPalavra}
+            autoCapitalize="characters"
+          />
 
           <TouchableOpacity
             style={[styles.salvarBotao, !conteudoValido && styles.salvarBotaoDesabilitado]}
@@ -189,8 +126,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   conteudo: { padding: 20 },
   label: { fontSize: 14, color: '#555', marginBottom: 6, marginTop: 16 },
-  tipos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tipoBotao: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20 },
   input: { borderWidth: 1, borderColor: '#DDD', padding: 12, borderRadius: 8, fontSize: 16 },
   salvarBotao: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 32 },
   salvarBotaoDesabilitado: { opacity: 0.5 },

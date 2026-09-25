@@ -67,6 +67,7 @@ export default function TarefaDoProfessor() {
     <View style={styles.container}>
       <ProfessorHeader
         titulo="Tarefa"
+        turmaId={turmaId}
         acaoDireita={
           <>
             <TouchableOpacity

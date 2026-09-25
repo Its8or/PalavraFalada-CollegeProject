@@ -92,7 +92,7 @@ export default function NovaTurma() {
 
   return (
     <View style={styles.container}>
-      <ProfessorHeader titulo={modoEdicao ? 'Editar Turma' : 'Nova Turma'} />
+      <ProfessorHeader titulo={modoEdicao ? 'Editar Turma' : 'Nova Turma'} turmaId={turmaId} />
 
       <View style={styles.conteudo}>
         {carregando ? (
