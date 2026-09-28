@@ -2,6 +2,8 @@
 -- Cria a tabela "alunos" que hoje não existe no schema, então as telas
 -- de alunos (app/(professor)/turma/[id]/alunos.tsx e turmas.tsx) sempre
 -- caem no fallback de "cadastro ainda não disponível".
+--
+-- Seguro rodar de novo mesmo se já tiver rodado antes.
 
 create table if not exists public.alunos (
   id uuid primary key default gen_random_uuid(),
@@ -14,6 +16,7 @@ alter table public.alunos enable row level security;
 
 -- O aluno entra só escaneando o QR Code + digitando o nome, sem login/auth,
 -- então o insert precisa ser permitido pro papel "anon" (chave anon do app).
+drop policy if exists "Aluno pode se cadastrar em uma turma" on public.alunos;
 create policy "Aluno pode se cadastrar em uma turma"
   on public.alunos
   for insert
@@ -22,6 +25,7 @@ create policy "Aluno pode se cadastrar em uma turma"
 
 -- Professor só enxerga os alunos das turmas que são dele, mesmo padrão
 -- já usado na tabela "turmas" (professor_id = auth.uid()).
+drop policy if exists "Professor ve alunos das proprias turmas" on public.alunos;
 create policy "Professor ve alunos das proprias turmas"
   on public.alunos
   for select

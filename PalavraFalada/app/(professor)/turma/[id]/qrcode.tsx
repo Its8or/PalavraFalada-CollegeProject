@@ -35,7 +35,7 @@ export default function QrCodeDaTurma() {
 
   return (
     <View style={styles.container}>
-      <ProfessorHeader titulo="QR Code da Turma" />
+      <ProfessorHeader titulo="QR Code da Turma" turmaId={id} />
 
       <View style={styles.conteudo}>
         {carregando ? (

@@ -29,22 +29,34 @@ export default function EscanearQrCode() {
 
     // O QR/campo manual carrega o código curto da turma - aqui a gente descobre
     // o id real dela pra vincular o aluno depois
-    const { data } = await supabase.from('turmas').select('id').eq('codigo', valor.toUpperCase()).maybeSingle();
+    const { data, error } = await supabase.from('turmas').select('id').eq('codigo', valor.toUpperCase()).maybeSingle();
     let turmaId = data?.id;
+    let ultimoErro = error;
 
     // Turma criada antes do código curto existir ainda tem o id (uuid) cru no QR
     if (!turmaId && REGEX_UUID.test(valor)) {
-      const { data: porId } = await supabase.from('turmas').select('id').eq('id', valor).maybeSingle();
+      const { data: porId, error: erroPorId } = await supabase.from('turmas').select('id').eq('id', valor).maybeSingle();
       turmaId = porId?.id;
+      ultimoErro = erroPorId ?? ultimoErro;
     }
 
     setBuscando(false);
 
+    if (ultimoErro) {
+      console.log('Erro ao buscar turma pelo código/id:', ultimoErro);
+    }
+
     if (!turmaId) {
-      alertar('Código inválido', 'Não encontramos nenhuma turma com esse código.', [
-        { text: 'Voltar', style: 'cancel', onPress: () => router.back() },
-        { text: 'Tentar novamente', onPress: () => setJaLeu(false) },
-      ]);
+      alertar(
+        'Código inválido',
+        ultimoErro
+          ? `Não encontramos a turma. Erro: ${ultimoErro.message}`
+          : `Não encontramos nenhuma turma com o código "${valor}".`,
+        [
+          { text: 'Voltar', style: 'cancel', onPress: () => router.back() },
+          { text: 'Tentar novamente', onPress: () => setJaLeu(false) },
+        ]
+      );
       return;
     }
 

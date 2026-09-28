@@ -4,9 +4,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { tirarFocoWeb } from '@/utils/blur-focus-web';
+import { useAlertModal } from '@/contexts/alert-modal';
 
-export function ProfessorSideMenu({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+// turmaId: quando o menu é aberto de dentro de uma turma (tarefas/alunos/qrcode/
+// criar), passa o id dela pra ir direto no QR Code certo. Fora de uma turma
+// (ex: Minhas Turmas), busca a primeira turma do professor como atalho.
+export function ProfessorSideMenu({ visible, onClose, turmaId }: { visible: boolean; onClose: () => void; turmaId?: string }) {
   const router = useRouter();
+  const { alertar } = useAlertModal();
   const [nomeProfessor, setNomeProfessor] = useState('Professor');
 
   function fechar() {
@@ -31,6 +36,24 @@ export function ProfessorSideMenu({ visible, onClose }: { visible: boolean; onCl
     router.push('/(professor)/minhas-turmas');
   }
 
+  async function handleQrCode() {
+    if (turmaId) {
+      fechar();
+      router.push({ pathname: '/(professor)/turma/[id]/qrcode', params: { id: turmaId } });
+      return;
+    }
+
+    const { data } = await supabase.from('turmas').select('id').order('nome').limit(1).maybeSingle();
+    fechar();
+
+    if (!data) {
+      alertar('Nenhuma turma ainda', 'Crie uma turma primeiro pra gerar o QR Code dela.');
+      return;
+    }
+
+    router.push({ pathname: '/(professor)/turma/[id]/qrcode', params: { id: data.id } });
+  }
+
   async function handleSair() {
     fechar();
     await supabase.auth.signOut();
@@ -40,6 +63,8 @@ export function ProfessorSideMenu({ visible, onClose }: { visible: boolean; onCl
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={fechar}>
       <View style={styles.linha}>
+        <TouchableOpacity style={styles.overlay} onPress={fechar} />
+
         <View style={styles.painel}>
           <View style={styles.perfil}>
             <Ionicons name="person-circle" size={48} color="#90CAF9" />
@@ -51,13 +76,16 @@ export function ProfessorSideMenu({ visible, onClose }: { visible: boolean; onCl
             <Text style={styles.itemTexto}>Minhas Turmas</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.item} onPress={handleQrCode}>
+            <Ionicons name="qr-code" size={20} color="#0D47A1" />
+            <Text style={styles.itemTexto}>QR Code</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.item} onPress={handleSair}>
             <Ionicons name="log-out" size={20} color="#D32F2F" />
             <Text style={[styles.itemTexto, { color: '#D32F2F' }]}>Sair</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.overlay} onPress={fechar} />
       </View>
     </Modal>
   );

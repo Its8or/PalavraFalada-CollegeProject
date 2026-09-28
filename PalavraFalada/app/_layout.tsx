@@ -7,7 +7,6 @@ export default function Layout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ title: 'Início' }} />
         <Stack.Screen name="(professor)" />
-        <Stack.Screen name="(aluno)" />
       </Stack>
     </AlertModalProvider>
   );
