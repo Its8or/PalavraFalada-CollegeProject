@@ -4,13 +4,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
-import { identificarTipoPorTitulo, extrairConteudo, construirFalaCompleta } from '@/constants/tarefas';
-import { playSpeech } from '@/services/speech';
+import { TarefaPratica } from '@/components/tarefa-pratica';
 import { useAlertModal } from '@/contexts/alert-modal';
 
-// Versão simples da tela de tarefa pro professor - só ouvir a pronúncia e
-// editar/excluir. Sem a quebra em "tiles" por letra que a tela do aluno tem
-// (isso é prática de repetição, não faz sentido pro professor só ouvir)
+// Mesma tela de prática que o aluno vê (palavra, letras separadas, botão de
+// ouvir) - só sem o botão de confirmar, já que o professor está revisando,
+// não praticando.
 export default function TarefaDoProfessor() {
   const { id: turmaId, tarefaId } = useLocalSearchParams<{ id: string; tarefaId: string }>();
   const router = useRouter();
@@ -60,9 +59,6 @@ export default function TarefaDoProfessor() {
     ]);
   }
 
-  const config = titulo ? identificarTipoPorTitulo(titulo) : null;
-  const conteudo = titulo && config ? extrairConteudo(titulo, config) : titulo ?? '';
-
   return (
     <View style={styles.container}>
       <ProfessorHeader
@@ -88,28 +84,14 @@ export default function TarefaDoProfessor() {
       ) : !titulo ? (
         <Text style={styles.aviso}>Não foi possível carregar essa tarefa.</Text>
       ) : (
-        <View style={styles.conteudo}>
-          <Text style={styles.palavra}>{conteudo}</Text>
-          <TouchableOpacity
-            style={styles.botaoPlay}
-            onPress={() => config && playSpeech(construirFalaCompleta(config, conteudo))}
-          >
-            <Ionicons name="play" size={32} color="#FFF" />
-          </TouchableOpacity>
-        </View>
+        <TarefaPratica titulo={titulo} />
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1, backgroundColor: '#F5F9FF' },
   botaoAcao: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   aviso: { textAlign: 'center', color: '#5C6B73', marginTop: 40, paddingHorizontal: 30 },
-  conteudo: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 30 },
-  palavra: { fontSize: 36, fontWeight: 'bold', color: '#0D47A1' },
-  botaoPlay: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: '#1565C0',
-    alignItems: 'center', justifyContent: 'center',
-  },
 });
