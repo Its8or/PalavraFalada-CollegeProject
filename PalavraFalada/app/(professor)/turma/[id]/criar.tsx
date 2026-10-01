@@ -3,15 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
-import { TIPOS_TAREFA, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
+import { TIPOS_TAREFA, TipoTarefa, identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
+import { buscarEmoji } from '@/constants/palavras-emoji';
 import { useAlertModal } from '@/contexts/alert-modal';
 
-// Formulário simplificado - só palavra, sem escolher tipo de tarefa. Toda
-// tarefa nova sai como "falar_palavra"; tarefas antigas de outros tipos
-// (completar/ouvir e repetir) continuam existindo e sendo lidas normalmente
-// em outras telas via identificarTipoPorTitulo, só não dá mais pra criar
-// esses tipos por aqui.
-const TIPO_UNICO = TIPOS_TAREFA.find((config) => config.tipo === 'falar_palavra')!;
+// Formulário com 2 tipos pra escolher: "falar a palavra" (padrão, só ouvir e
+// repetir) e "completar a palavra" (jogo de montar tocando nas letras).
+// Tarefas antigas de outros tipos (ouvir_repetir/ler_palavra) continuam
+// existindo e sendo lidas normalmente nas outras telas, só não dá pra criar
+// esses tipos por aqui - ao editar uma tarefa assim, ela vira "falar_palavra".
+const TIPOS_DISPONIVEIS: TipoTarefa[] = ['falar_palavra', 'completar_palavra'];
 
 export default function CriarTarefa() {
   const { id: turmaId, tarefaId } = useLocalSearchParams<{ id: string; tarefaId?: string }>();
@@ -19,6 +20,7 @@ export default function CriarTarefa() {
   const { alertar } = useAlertModal();
   const modoEdicao = !!tarefaId;
 
+  const [tipo, setTipo] = useState<TipoTarefa>('falar_palavra');
   const [palavra, setPalavra] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [carregando, setCarregando] = useState(modoEdicao);
@@ -34,15 +36,18 @@ export default function CriarTarefa() {
         if (data?.titulo) {
           const config = identificarTipoPorTitulo(data.titulo);
           setPalavra(config ? extrairConteudo(data.titulo, config) : data.titulo);
+          setTipo(config?.tipo === 'completar_palavra' ? 'completar_palavra' : 'falar_palavra');
         }
         setCarregando(false);
       });
   }, [tarefaId]);
 
   const conteudoValido = palavra.trim().length > 0;
+  const emojiPreview = tipo === 'completar_palavra' ? buscarEmoji(palavra.trim()) : null;
 
   function montarTitulo() {
-    return `${TIPO_UNICO.prefixo} ${palavra.trim().toUpperCase()}`;
+    const tipoSelecionado = TIPOS_TAREFA.find((config) => config.tipo === tipo)!;
+    return `${tipoSelecionado.prefixo} ${palavra.trim().toUpperCase()}`;
   }
 
   async function handleSalvar() {
@@ -100,6 +105,25 @@ export default function CriarTarefa() {
         <ActivityIndicator style={{ marginTop: 40 }} />
       ) : (
         <View style={styles.conteudo}>
+          <Text style={styles.label}>Tipo de tarefa</Text>
+          <View style={styles.tipos}>
+            {TIPOS_DISPONIVEIS.map((tipoOpcao) => {
+              const config = TIPOS_TAREFA.find((c) => c.tipo === tipoOpcao)!;
+              const selecionado = tipo === tipoOpcao;
+              return (
+                <TouchableOpacity
+                  key={tipoOpcao}
+                  style={[styles.tipoBotao, { backgroundColor: selecionado ? config.cor : '#EEE' }]}
+                  onPress={() => setTipo(tipoOpcao)}
+                >
+                  <Text style={{ color: selecionado ? '#FFF' : '#333', fontWeight: '600' }}>
+                    {tipoOpcao === 'completar_palavra' ? 'Completar a palavra' : 'Falar a palavra'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <Text style={styles.label}>Palavra</Text>
           <TextInput
             style={styles.input}
@@ -108,6 +132,14 @@ export default function CriarTarefa() {
             onChangeText={setPalavra}
             autoCapitalize="characters"
           />
+
+          {tipo === 'completar_palavra' && (
+            <Text style={styles.dicaEmoji}>
+              {emojiPreview
+                ? `O jogo vai mostrar essa figura: ${emojiPreview}`
+                : 'Essa palavra não tem figura cadastrada - o jogo funciona igual, só sem imagem.'}
+            </Text>
+          )}
 
           <TouchableOpacity
             style={[styles.salvarBotao, !conteudoValido && styles.salvarBotaoDesabilitado]}
@@ -126,7 +158,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   conteudo: { padding: 20 },
   label: { fontSize: 14, color: '#555', marginBottom: 6, marginTop: 16 },
+  tipos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tipoBotao: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20 },
   input: { borderWidth: 1, borderColor: '#DDD', padding: 12, borderRadius: 8, fontSize: 16 },
+  dicaEmoji: { fontSize: 13, color: '#8E8E93', marginTop: 8 },
   salvarBotao: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 32 },
   salvarBotaoDesabilitado: { opacity: 0.5 },
   salvarTexto: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },

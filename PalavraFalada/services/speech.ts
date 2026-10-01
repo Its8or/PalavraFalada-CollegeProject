@@ -7,8 +7,9 @@ import * as Speech from 'expo-speech';
  * para evitar que os áudios se sobreponham quando o usuário toca em várias
  * palavras/sílabas rapidamente.
  */
-export async function playSpeech(text: string) {
+export async function playSpeech(text: string, onDone?: () => void) {
   if (!text || !text.trim()) {
+    onDone?.();
     return;
   }
 
@@ -20,7 +21,13 @@ export async function playSpeech(text: string) {
 
   Speech.speak(text.trim(), {
     language: 'pt-BR',
-    onError: (error) => console.log('Erro ao reproduzir áudio:', error),
+    onDone,
+    // Se der erro no TTS, ainda assim avisa quem tava esperando a fala acabar
+    // (senão uma tela que só avança depois do onDone ficaria travada)
+    onError: (error) => {
+      console.log('Erro ao reproduzir áudio:', error);
+      onDone?.();
+    },
   });
 }
 

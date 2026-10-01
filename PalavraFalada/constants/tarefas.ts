@@ -47,5 +47,5 @@ export const TAREFAS_EXEMPLO = [
   { id: '2', titulo: 'Ouvir e repetir P + A = PA' },
   { id: '3', titulo: 'Falar a palavra BOLA' },
   { id: '4', titulo: 'Ler a palavra CASA' },
-  { id: '5', titulo: 'Completar a palavra CA_SA' },
+  { id: '5', titulo: 'Completar a palavra CASA' },
 ];

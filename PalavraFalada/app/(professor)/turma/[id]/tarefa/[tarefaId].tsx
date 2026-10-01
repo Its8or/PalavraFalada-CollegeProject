@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { ProfessorHeader } from '@/components/professor-header';
 import { TarefaPratica } from '@/components/tarefa-pratica';
+import { JogoMontarPalavra } from '@/components/jogo-montar-palavra';
+import { identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
 import { useAlertModal } from '@/contexts/alert-modal';
 
 // Mesma tela de prática que o aluno vê (palavra, letras separadas, botão de
@@ -59,6 +61,8 @@ export default function TarefaDoProfessor() {
     ]);
   }
 
+  const config = titulo ? identificarTipoPorTitulo(titulo) : null;
+
   return (
     <View style={styles.container}>
       <ProfessorHeader
@@ -83,6 +87,8 @@ export default function TarefaDoProfessor() {
         <ActivityIndicator style={{ marginTop: 40 }} />
       ) : !titulo ? (
         <Text style={styles.aviso}>Não foi possível carregar essa tarefa.</Text>
+      ) : config?.tipo === 'completar_palavra' ? (
+        <JogoMontarPalavra key={tarefaId} palavra={extrairConteudo(titulo, config)} />
       ) : (
         <TarefaPratica titulo={titulo} />
       )}

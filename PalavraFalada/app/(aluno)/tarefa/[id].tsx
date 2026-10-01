@@ -3,6 +3,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AlunoTabBar } from '@/components/aluno-tab-bar';
 import { TarefaPratica } from '@/components/tarefa-pratica';
+import { JogoMontarPalavra } from '@/components/jogo-montar-palavra';
+import { identificarTipoPorTitulo, extrairConteudo } from '@/constants/tarefas';
 import { stopSpeech } from '@/services/speech';
 
 export default function TarefaDetalhe() {
@@ -14,6 +16,9 @@ export default function TarefaDetalhe() {
     router.push({ pathname: '/(aluno)/parabens', params: { id, nome, turmaId } });
   }
 
+  const config = identificarTipoPorTitulo(titulo ?? '');
+  const ehMontarPalavra = config?.tipo === 'completar_palavra';
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -24,10 +29,14 @@ export default function TarefaDetalhe() {
         <View style={{ width: 24 }} />
       </View>
 
-      <TarefaPratica
-        titulo={titulo ?? ''}
-        acaoExtra={{ icone: 'checkmark', legenda: 'Já repeti', cor: '#43A047', onPress: handleRepeti }}
-      />
+      {ehMontarPalavra ? (
+        <JogoMontarPalavra key={id} palavra={extrairConteudo(titulo ?? '', config)} onCompleto={handleRepeti} />
+      ) : (
+        <TarefaPratica
+          titulo={titulo ?? ''}
+          acaoExtra={{ icone: 'checkmark', legenda: 'Já repeti', cor: '#43A047', onPress: handleRepeti }}
+        />
+      )}
 
       <AlunoTabBar />
     </View>
